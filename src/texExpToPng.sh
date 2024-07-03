@@ -3,7 +3,7 @@
 # Check if the correct number of arguments is provided
 if [ "$#" -ne 3 ]; then
     echo "Usage: $0 <math_formula> <image_size> <output_filename>"
-    echo "Example: ./texExpToPng.sh \"E = 5 + m*c^2\" 800 output.png"
+    echo "Example: $0 \"E = 5 + m*c^2\" 800 output.png"
     exit 1
 fi
 
