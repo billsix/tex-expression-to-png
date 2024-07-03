@@ -1,1 +1,1 @@
-podman build -t my-debian .
+podman build -t tex-expression-to-png .

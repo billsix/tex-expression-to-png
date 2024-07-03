@@ -2,4 +2,4 @@
 
 podman run -it --rm \
        -v ./output/:/output/ \
-       my-debian "$@"
+       tex-expression-to-png "$@"
