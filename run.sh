@@ -9,5 +9,5 @@ fi
 
 
 podman run -it --rm \
-       -v ./output/:/output/ \
+       -v ./output/:/output/:Z \
        tex-expression-to-png "$@"
