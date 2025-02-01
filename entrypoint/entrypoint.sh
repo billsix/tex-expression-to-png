@@ -1,3 +1,3 @@
 #!/bin/env bash
 
-python3 /texExpToPng.py --exp "$1" --size "$2" --output /output/"$3"
+tex_exp_to_png --exp "$1" --size "$2" --output /output/"$3"
