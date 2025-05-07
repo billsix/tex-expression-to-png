@@ -5,15 +5,18 @@ RUN apt update && apt upgrade -y && \
     apt install -y texlive  \
                    dvipng  \
                    texlive-latex-extra \
-                   cargo
+                   automake \
+                   autoconf \
+                   make \
+                   gcc
 
 
 COPY entrypoint/entrypoint.sh  /entrypoint.sh
 COPY src/  /src/src
-COPY Cargo.lock Cargo.toml /src/
-
-RUN cd /src && cargo build --release && cargo build && \
-    install -Dm755 target/release/tex_exp_to_png /usr/local/bin/
+COPY autogen.sh /src/
+COPY configure.ac /src/
+COPY Makefile.am /src/
+RUN cd /src && ./autogen.sh && ./configure --prefix=/usr && make && make install
 
 
 ENTRYPOINT ["/entrypoint.sh"]

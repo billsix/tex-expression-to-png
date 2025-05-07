@@ -21,7 +21,7 @@ shell: image ## Get Shell into a ephermeral container made from the image
 .PHONY: example
 example: image ## Run an example and put the output into the output folder
 	podman run -it --rm \
-		-v ./output/:/output/:Z \
+		-v ./output:/output/:Z \
 		tex-expression-to-png "E = 5 + m*c^2" 800 output.png
 
 .PHONY: help
