@@ -29,6 +29,8 @@ RUN sed -i -e "s@tsflags=nodocs@#tsflags=nodocs@g" /etc/dnf/dnf.conf && \
                    gcc \
                    gdb \
                    git \
+                   glib \
+                   glib2-devel \
                    lldb \
                    meson \
                    ninja \

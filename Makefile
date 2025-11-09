@@ -6,10 +6,18 @@ USE_EMACS=1
 
 CONTAINER_CMD = podman
 CONTAINER_NAME = tex-expression-to-png
-FILES_TO_MOUNT = -v .:/root/texExpToPng:Z \
-                 -v ./entrypoint/shell.sh:/usr/local/bin/shell.sh:Z \
-                 -v ./entrypoint/format.sh:/usr/local/bin/format.sh:Z \
-                 -v ./entrypoint/lint.sh:/usr/local/bin/lint.sh:Z \
+
+SOURCE_FILES_TO_MOUNT = \
+     -v ./meson.build:/root/texExpToPng/meson.build:Z \
+     -v ./src/tex_exp_to_png.c:/root/texExpToPng/src/tex_exp_to_png.c:Z \
+
+SHELL_SCRIPTS_TO_MOUNT = \
+    -v ./entrypoint/shell.sh:/usr/local/bin/shell.sh:Z \
+    -v ./entrypoint/format.sh:/usr/local/bin/format.sh:Z \
+    -v ./entrypoint/lint.sh:/usr/local/bin/lint.sh:Z \
+
+FILES_TO_MOUNT = $(SOURCE_FILES_TO_MOUNT) \
+                 $(SHELL_SCRIPTS_TO_MOUNT) \
                  -v ./entrypoint/dotfiles/.tmux.conf:/root/.tmux.conf:Z
 
 PACKAGE_CACHE_ROOT = ~/.cache/packagecache/fedora/43
