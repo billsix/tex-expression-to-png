@@ -4,15 +4,15 @@
 #include <string.h>
 #include <unistd.h>
 
-void print_usage(const char *progname) {
+void print_usage(const char* progname) {
   printf("Usage:\n");
   printf("  %s --exp \"E = 5 + m*c^2\" --size 800 --output output.png\n",
          progname);
   printf("  %s -f input.txt --size 800 --output output.png\n", progname);
 }
 
-char *read_file(const char *filename) {
-  FILE *file = fopen(filename, "r");
+char* read_file(const char* filename) {
+  FILE* file = fopen(filename, "r");
   if (!file) {
     perror("fopen");
     exit(EXIT_FAILURE);
@@ -20,7 +20,7 @@ char *read_file(const char *filename) {
   fseek(file, 0, SEEK_END);
   long length = ftell(file);
   rewind(file);
-  char *buffer = malloc(length + 1);
+  char* buffer = malloc(length + 1);
   if (!buffer) {
     perror("malloc");
     exit(EXIT_FAILURE);
@@ -31,11 +31,11 @@ char *read_file(const char *filename) {
   return buffer;
 }
 
-int main(int argc, char **argv) {
-  char *expression = NULL;
-  char *filename = NULL;
-  char *size = NULL;
-  char *output = NULL;
+int main(int argc, char** argv) {
+  char* expression = NULL;
+  char* filename = NULL;
+  char* size = NULL;
+  char* output = NULL;
 
   static struct option long_options[] = {{"exp", required_argument, 0, 'e'},
                                          {"file", required_argument, 0, 'f'},
@@ -48,21 +48,21 @@ int main(int argc, char **argv) {
   while ((opt = getopt_long(argc, argv, "e:f:s:o:", long_options,
                             &option_index)) != -1) {
     switch (opt) {
-    case 'e':
-      expression = strdup(optarg);
-      break;
-    case 'f':
-      filename = strdup(optarg);
-      break;
-    case 's':
-      size = strdup(optarg);
-      break;
-    case 'o':
-      output = strdup(optarg);
-      break;
-    default:
-      print_usage(argv[0]);
-      exit(EXIT_FAILURE);
+      case 'e':
+        expression = strdup(optarg);
+        break;
+      case 'f':
+        filename = strdup(optarg);
+        break;
+      case 's':
+        size = strdup(optarg);
+        break;
+      case 'o':
+        output = strdup(optarg);
+        break;
+      default:
+        print_usage(argv[0]);
+        exit(EXIT_FAILURE);
     }
   }
 
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     expression = read_file(filename);
   }
 
-  FILE *tex_file = fopen("formula.tex", "w");
+  FILE* tex_file = fopen("formula.tex", "w");
   if (!tex_file) {
     perror("fopen formula.tex");
     exit(EXIT_FAILURE);
