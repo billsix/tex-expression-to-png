@@ -1,5 +1,8 @@
 FROM registry.fedoraproject.org/fedora:43
 
+ARG USE_EMACS=0
+
+
 COPY entrypoint/dotfiles/ /root/
 COPY .clang-format /root
 COPY entrypoint/buildDebug.sh /usr/local/bin
@@ -10,12 +13,19 @@ COPY entrypoint/entrypoint.sh /
 
 
 
+RUN if [ "$USE_EMACS" = "1" ]; then \
+       dnf install -y \
+                   emacs && \
+       emacs --batch --load /root/.emacs.d/install-melpa-packages.el && \
+       echo "alias ls='ls --color=auto'" >> ~/.bashrc ;\
+     fi ;
+
+
 RUN sed -i -e "s@tsflags=nodocs@#tsflags=nodocs@g" /etc/dnf/dnf.conf && \
     echo "keepcache=True" >> /etc/dnf/dnf.conf && \
     dnf upgrade -y && \
     dnf install -y clang \
                    clang-tools-extra \
-                   emacs \
                    gcc \
                    gdb \
                    git \
@@ -27,8 +37,7 @@ RUN sed -i -e "s@tsflags=nodocs@#tsflags=nodocs@g" /etc/dnf/dnf.conf && \
                    texlive-dvipng \
                    texlive-dvisvgm \
                    texlive-standalone \
-                   which && \
-    emacs --batch --load /root/.emacs.d/install-melpa-packages.el
+                   which
 
 COPY . /root/texExpToPng/
 

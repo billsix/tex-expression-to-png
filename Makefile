@@ -1,5 +1,9 @@
 .DEFAULT_GOAL := shell
 
+# Modify these to 0 if you want a quicker build and don't
+# need the features
+USE_EMACS=1
+
 CONTAINER_CMD = podman
 CONTAINER_NAME = tex-expression-to-png
 FILES_TO_MOUNT = -v .:/root/texExpToPng:Z \
@@ -25,9 +29,9 @@ image: ## Build podman image to run the examples
 	# build the container
 	$(CONTAINER_CMD) build \
                          -t $(CONTAINER_NAME) \
+                         --build-arg USE_EMACS=$(USE_EMACS) \
                          $(DNF_CACHE_TO_MOUNT) \
                          .
-
 
 .PHONY: shell
 shell: format ## Get Shell into a ephermeral container made from the image
