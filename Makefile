@@ -62,7 +62,7 @@ format: image ## Format the C code
 example: image ## Run an example and put the output into the output folder
 	podman run -it --rm \
 		-v ./output:/output/:Z \
-		tex-expression-to-png "E = 5 + m*c^2" 800 output.png
+		tex-expression-to-png '$$ E = 5 + m*c^2 $$' 800 output.png
 
 .PHONY: help
 help:
