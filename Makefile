@@ -7,6 +7,11 @@ USE_EMACS=1
 CONTAINER_CMD = podman
 CONTAINER_NAME = tex-expression-to-png
 
+TMUX_FILE := $(HOME)/.tmux.conf
+TMUX_REAL_PATH := $(shell readlink -f $(TMUX_FILE))
+TMUX_MOUNT := $(shell if [ -f $(TMUX_REAL_PATH) ]; then echo "-v $(TMUX_REAL_PATH):/root/.tmux.conf:Z" ; fi)
+
+
 SOURCE_FILES_TO_MOUNT = \
      -v ./meson.build:/root/texExpToPng/meson.build:Z \
      -v ./src/tex_exp_to_png.c:/root/texExpToPng/src/tex_exp_to_png.c:Z \
@@ -17,8 +22,7 @@ SHELL_SCRIPTS_TO_MOUNT = \
     -v ./entrypoint/lint.sh:/usr/local/bin/lint.sh:Z \
 
 FILES_TO_MOUNT = $(SOURCE_FILES_TO_MOUNT) \
-                 $(SHELL_SCRIPTS_TO_MOUNT) \
-                 -v ./entrypoint/dotfiles/.tmux.conf:/root/.tmux.conf:Z
+                 $(SHELL_SCRIPTS_TO_MOUNT)
 
 PACKAGE_CACHE_ROOT = ~/.cache/packagecache/fedora/43
 
@@ -27,7 +31,7 @@ DNF_CACHE_TO_MOUNT = -v $(PACKAGE_CACHE_ROOT)/var/cache/libdnf5:/var/cache/libdn
 
 
 ifeq ($(USE_EMACS), 1)
-  ELPA_MOUNT= -v $(CURDIR)/entrypoint/dotfiles/.emacs.d/elpa:/root/.emacs.d/elpa:U,z
+  ELPA_MOUNT= -v $(CURDIR)/entrypoint/dotfiles/.emacs.d/:/root/.emacs.d/:U,z
 else
   ELPA_MOUNT=
 endif
@@ -46,6 +50,7 @@ image: ## Build podman image to run the examples
                          -t $(CONTAINER_NAME) \
                          --build-arg USE_EMACS=$(USE_EMACS) \
                          $(ELPA_MOUNT) \
+	                 $(TMUX_MOUNT) \
                          $(DNF_CACHE_TO_MOUNT) \
                          .
 
@@ -55,6 +60,7 @@ shell: format ## Get Shell into a ephermeral container made from the image
 		--entrypoint /bin/bash \
 		$(FILES_TO_MOUNT) \
                 $(ELPA_MOUNT) \
+                $(TMUX_MOUNT) \
 		$(CONTAINER_NAME) \
 		/usr/local/bin/shell.sh
 
