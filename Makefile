@@ -26,6 +26,13 @@ DNF_CACHE_TO_MOUNT = -v $(PACKAGE_CACHE_ROOT)/var/cache/libdnf5:/var/cache/libdn
 	             -v $(PACKAGE_CACHE_ROOT)/var/lib/dnf:/var/lib/dnf:Z
 
 
+ifeq ($(USE_EMACS), 1)
+  ELPA_MOUNT= -v $(CURDIR)/entrypoint/dotfiles/.emacs.d/elpa:/root/.emacs.d/elpa:U,z
+else
+  ELPA_MOUNT=
+endif
+
+
 .PHONY: all
 all: shell ## Build the image and get a shell in it
 
@@ -38,6 +45,7 @@ image: ## Build podman image to run the examples
 	$(CONTAINER_CMD) build \
                          -t $(CONTAINER_NAME) \
                          --build-arg USE_EMACS=$(USE_EMACS) \
+                         $(ELPA_MOUNT) \
                          $(DNF_CACHE_TO_MOUNT) \
                          .
 
@@ -46,6 +54,7 @@ shell: format ## Get Shell into a ephermeral container made from the image
 	$(CONTAINER_CMD) run -it --rm \
 		--entrypoint /bin/bash \
 		$(FILES_TO_MOUNT) \
+                $(ELPA_MOUNT) \
 		$(CONTAINER_NAME) \
 		/usr/local/bin/shell.sh
 
