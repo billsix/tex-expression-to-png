@@ -39,6 +39,7 @@ RUN  --mount=type=cache,target=/var/cache/libdnf5 \
                    texlive-dvipng \
                    texlive-dvisvgm \
                    texlive-standalone \
+                   tmux \
                    which && \
     echo "exit() {" >> ~/.bashrc && \
     echo "    echo "Formatting on shell exit"" >> ~/.bashrc && \
