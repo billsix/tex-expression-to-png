@@ -1,7 +1,18 @@
 # Add a `make update-emacs-packages` target (vendored Emacs refresh)
 
-**Status:** proposed — needs go-ahead
+**Status:** complete — 2026-06-14 (target added + dry-run verified; not executed, see below)
 **Created:** 2026-06-13
+**Completed:** 2026-06-14
+
+> **Done:** added the `update-emacs-packages` target (whole-`.emacs.d/` mount, **elpa-scoped** wipe
+> `find /root/.emacs.d/elpa -mindepth 1 -delete` so the hand-written `.el` config is untouched, then
+> reinstall + strip `*.elc`/`*.eln` + `git add -A -f` scoped to `elpa/`), plus the `ELPA_MOUNT`
+> use-vs-refresh comment. **Scope = decision #1 only** (just the target); decisions #2 (offline build /
+> drop the build-time install) and #3 (narrow the mount to `elpa/`) were left as separate future
+> choices. Verified: `make help` lists it and `make -n` emits the expected steps. **Not executed** —
+> running rewrites the ~17M vendored tree (Bill's deliberate commit), and texExpToPng's image bakes in
+> TeX Live so it won't build in the sandbox's 8 GB tmpfs; run it on the host. (The `emacs --batch`
+> refresh mechanism itself is already proven from the mvp run.)
 
 ## Goal
 
