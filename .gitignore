@@ -9,3 +9,6 @@ auto-save-list
 history
 recentf
 session.*
+
+# exported OCI image tars (make image-export) — large, never commit
+tex-expression-to-png-*.tar
