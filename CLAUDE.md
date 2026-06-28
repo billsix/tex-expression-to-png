@@ -38,9 +38,10 @@ texExpToPng --file expr.tex       --size 800 --output out.png
 
 Fedora-44 + podman family template. `make` targets:
 
+- `make help` *(default)* — list the documented targets.
 - `make image` — build the image (`tex-expression-to-png`); installs TeX Live
   (`texlive`, `texlive-dvipng`, `texlive-standalone`, `texlive-anyfontsize`, …).
-- `make shell` *(default; runs `format` first)* — dev shell, source bind-mounted.
+- `make shell` *(runs `format` first)* — dev shell, source bind-mounted.
   `buildDebug.sh` (seeded into bash history) does the meson debug build.
 - `make format` — clang-format the C.
 - `make example` — render `$$ E = 5 + m*c^2 $$` at 800 DPI to `./output/output.png`.
