@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := shell
+.DEFAULT_GOAL := help
 
 # Modify these to 0 if you want a quicker build and don't
 # need the features
