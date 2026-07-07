@@ -24,12 +24,6 @@ SHELL_SCRIPTS_TO_MOUNT = \
 FILES_TO_MOUNT = $(SOURCE_FILES_TO_MOUNT) \
                  $(SHELL_SCRIPTS_TO_MOUNT)
 
-PACKAGE_CACHE_ROOT = ~/.cache/packagecache/fedora/43
-
-DNF_CACHE_TO_MOUNT = -v $(PACKAGE_CACHE_ROOT)/var/cache/libdnf5:/var/cache/libdnf5:Z \
-	             -v $(PACKAGE_CACHE_ROOT)/var/lib/dnf:/var/lib/dnf:Z
-
-
 # USE_EMACS=1 (the default) bind-mounts the whole vendored .emacs.d/ into the
 # container so an interactive `make shell` can *use* the vendored packages (:U
 # chowns it to the container user, :z relabels for SELinux). Set USE_EMACS=0 to
@@ -47,16 +41,12 @@ all: shell ## Build the image and get a shell in it
 
 .PHONY: image
 image: ## Build podman image to run the examples
-	# cache rpm packages
-	mkdir -p $(PACKAGE_CACHE_ROOT)/var/cache/libdnf5
-	mkdir -p $(PACKAGE_CACHE_ROOT)/var/lib/dnf
 	# build the container
 	$(CONTAINER_CMD) build \
                          -t $(CONTAINER_NAME) \
                          --build-arg USE_EMACS=$(USE_EMACS) \
                          $(ELPA_MOUNT) \
 	                 $(TMUX_MOUNT) \
-                         $(DNF_CACHE_TO_MOUNT) \
                          .
 
 .PHONY: shell
