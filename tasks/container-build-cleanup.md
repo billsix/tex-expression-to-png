@@ -1,6 +1,6 @@
 # Fix bashrc exit() trap, dnf cache path, buildDebug symlink
 
-**Status:** proposed — not started
+**Status:** in progress — cache-path item resolved 2026-07-07; two items remain
 **Created:** 2026-06-13
 
 ## Goal
@@ -15,8 +15,12 @@ cleanup plus one local script bug.
       (`echo "    builtin exit "$@"" >> ~/.bashrc`), so `$@` is expanded empty at
       build time and `exit 1` becomes `exit 0`. **Fix:** quote so `"$@"` lands
       literally, or `COPY` a real bashrc fragment.
-- [ ] **Stale cache path.** `PACKAGE_CACHE_ROOT = ~/.cache/packagecache/fedora/43`
-      vs base image `fedora:44`. **Fix:** bump to `…/fedora/44`.
+- [x] **Stale cache path.** Resolved 2026-07-07, differently than planned:
+      instead of bumping `PACKAGE_CACHE_ROOT` to `…/fedora/44`, the host
+      package-cache scheme was removed entirely — Bill converged all projects
+      on podman-internal `--mount=type=cache` (mvp style) so that
+      `podman system reset` wipes the package caches too. `make image` gate
+      passed after the removal.
 - [ ] **`buildDebug.sh` non-idempotent symlink.** Ends with
       `ln -s builddir/compile_commands.json` (no `-f`), which works on first run
       but fails "File exists" on re-run. **Fix:** `ln -sf … compile_commands.json`
