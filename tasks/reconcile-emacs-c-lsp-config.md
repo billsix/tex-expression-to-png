@@ -1,15 +1,21 @@
 # Reconcile the Emacs C LSP config (lsp-mode vs eglot; missing clang-format)
 
-**Status:** proposed — needs go-ahead
+**Status:** in progress — both source edits applied 2026-07-09; elpa regen pending
 **Created:** 2026-07-09
 
 ## Goal
 
 The vendored Emacs config configures the C language server two ways at once and
 binds a formatter whose package isn't installed. Pick one LSP client and make
-the `clang-format` binding real. This is Bill's personal config that rides along
-in this repo, so any fix here should also be carried back to the canonical
-dotfiles — not just patched in texExpToPng.
+the `clang-format` binding real.
+
+**Correction (2026-07-09):** this is *not* shared with Bill's canonical dotfiles.
+The canonical config at `/foo/opt/dotfiles/.emacs.d/` is clean — `bills-preferences.el`
+hooks eglot only to `python-mode`/`emacs-lisp-mode`, and it drives C via a separate
+`c++-mode.el` (`add-hook 'c-mode-hook 'lsp`), with no clang-format block. The
+double-hook and the dangling clang-format binding are **local to texExpToPng's
+diverged copy** of `init.el`/`preferences.el`. So the fix is texExpToPng-only;
+there is nothing to port back to canonical.
 
 ## Findings
 
@@ -31,22 +37,20 @@ dotfiles — not just patched in texExpToPng.
 
 ## Plan
 
-- [ ] **Choose one C LSP client** and remove the other's `c-mode`/`c++-mode`
-      hook. (Recommend keeping **lsp-mode** — init.el carries the fuller setup:
-      explicit clangd executable, lsp-ui, company tuning. Then drop the
-      `(c-mode c++-mode) . eglot-ensure` hook from preferences.el, leaving eglot
-      for emacs-lisp only if desired.)
-- [ ] **Add `clang-format` to the MELPA package list** in
-      `install-melpa-packages.el` so the `C-c f` binding resolves — or remove
-      the `use-package clang-format` block from init.el if the binding isn't
-      wanted.
-- [ ] **Regenerate the vendored elpa** via `make update-emacs-packages` if the
-      package list changed, so the committed tree matches.
-- [ ] **Port the same fixes to the canonical dotfiles** (the source of these
-      files) so the drift doesn't reappear the next time this config is copied
-      into a project.
+- [x] **Kept lsp-mode as the sole C client.** Removed the
+      `(c-mode c++-mode) . eglot-ensure` hook from `preferences.el` (eglot now
+      hooks emacs-lisp only). lsp-mode + clangd from `init.el` owns C/C++.
+- [x] **Added `clang-format` to the MELPA package list** in
+      `install-melpa-packages.el` so the `C-c f` binding resolves.
+- [ ] **Regenerate the vendored elpa** via `make update-emacs-packages` so the
+      committed `elpa/` actually contains `clang-format`. **Required for fix #2
+      to work at runtime:** the Makefile bind-mounts the host `.emacs.d/elpa`
+      over the image's, so the newly-added package is invisible until the
+      committed tree is regenerated. Needs nested podman (available) + a full
+      image rebuild — **not run yet; awaiting go-ahead** (it restages the whole
+      vendored elpa tree via `git add -f`).
 
 ## Open questions
 
-- Keep lsp-mode or eglot for C? (Plan recommends lsp-mode; Bill's call.)
-- Is the `C-c f` clang-format binding actually wanted, or should the block go?
+- Run `make update-emacs-packages` now to land clang-format in the committed
+  elpa? (Heavy: rebuilds the image and restages the elpa tree.)

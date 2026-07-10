@@ -4,6 +4,7 @@
 
 (setq package-selected-packages
       '(lsp-mode
+        clang-format
         yasnippet
         helm-lsp
         projectile

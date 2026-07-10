@@ -22,11 +22,8 @@
   (interactive)
   (kill-new (sha1 (buffer-substring (region-beginning) (region-end)))))
 
-(use-package eglot
-  :ensure t
-  :defer t
-  :hook ((c-mode c++-mode) . eglot-ensure))
-
+;; C/C++ are served by lsp-mode + clangd (see init.el); eglot is used only
+;; for emacs-lisp so the two clients don't both attach to a C buffer.
 (use-package eglot
   :ensure t
   :defer t
