@@ -40,9 +40,13 @@ Fedora-44 + podman family template. `make` targets:
 
 - `make help` *(default)* — list the documented targets.
 - `make image` — build the image (`tex-expression-to-png`); installs TeX Live
-  (`texlive`, `texlive-dvipng`, `texlive-standalone`, `texlive-anyfontsize`, …).
-- `make shell` *(runs `format` first)* — dev shell, source bind-mounted.
-  `buildDebug.sh` (seeded into bash history) does the meson debug build.
+  (`texlive`, `texlive-dvipng`, `texlive-standalone`, `texlive-anyfontsize`, …),
+  then compiles + installs the CLI as an image-build stage (COPYs `meson.build` +
+  `src/` and runs `buildDebug.sh`), so the image ships a ready-to-run binary
+  plus `builddir`/`compile_commands.json`.
+- `make shell` *(runs `format` first)* — dev shell, source bind-mounted. The
+  binary + clangd's `compile_commands.json` are already built into the image, so
+  it works off the bat; recompile edited source with `meson compile -C builddir`.
 - `make format` — clang-format the C.
 - `make example` — render `$$ E = 5 + m*c^2 $$` at 800 DPI to `./output/output.png`.
 

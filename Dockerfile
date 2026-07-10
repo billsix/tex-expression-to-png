@@ -48,9 +48,16 @@ RUN  --mount=type=cache,target=/var/cache/libdnf5 \
     echo "    builtin exit "$@"" >> ~/.bashrc && \
     echo "}" >> ~/.bashrc && \
     echo "PS1='\[\e[36m\]┌─(\t) \[\e[32m\]\u@\h:\w\n\[\e[36m\]└─λ \[\e[0m\]'" >> ~/.bashrc && \
-    echo "/usr/local/bin/buildDebug.sh" >> ~/.bash_history
+    echo "meson compile -C builddir" >> ~/.bash_history
 
-
+# Build the CLI as an image-build stage so the image ships a ready-to-run binary
+# — all building happens here, not at `make example`/run time. Placed after the
+# toolchain install so meson/clang/glib are available. buildDebug.sh runs
+# meson setup + compile + install (to /usr/local/bin) and symlinks
+# compile_commands.json for clangd.
+COPY meson.build /root/texExpToPng/meson.build
+COPY src /root/texExpToPng/src
+RUN /usr/local/bin/buildDebug.sh
 
 
 ENTRYPOINT ["/entrypoint.sh"]
