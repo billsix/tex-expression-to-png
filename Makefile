@@ -76,9 +76,9 @@ update-emacs-packages: ## USE_EMACS=1: rebuild image, wipe+reinstall elpa, strip
 		-v $(CURDIR)/entrypoint/dotfiles/.emacs.d/:/root/.emacs.d/:U,z \
 		--entrypoint /bin/bash \
 		$(CONTAINER_NAME) \
-		-c 'set -e; find /root/.emacs.d/elpa -mindepth 1 -delete; \
+		-c 'mkdir -p /root/.emacs.d/elpa; find /root/.emacs.d/elpa -mindepth 1 -delete; \
 		    emacs --batch --load /root/.emacs.d/install-melpa-packages.el'
-	cd $(CURDIR)/entrypoint/dotfiles/.emacs.d/elpa && \
+	mkdir -p $(CURDIR)/entrypoint/dotfiles/.emacs.d/elpa && cd $(CURDIR)/entrypoint/dotfiles/.emacs.d/elpa && \
 		find . \( -iname '*.elc' -o -iname '*.eln' \) -delete && \
 		git add -A -f .
 	@echo "Done: reinstalled packages, stripped *.elc/*.eln, staged elpa -- review and commit."
