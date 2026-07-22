@@ -76,7 +76,12 @@ int main(int argc, char** argv) {
   }
 
   g_fprintf(tex_file,
-            "\\documentclass{standalone}\n"
+            /* varwidth: the bare `standalone` class typesets its body in
+               restricted horizontal mode and rejects display math (\[...\],
+               align*, equation*); the varwidth option sets a natural-width
+               paragraph that supports display math + line breaks while still
+               cropping tight. */
+            "\\documentclass[varwidth]{standalone}\n"
             "\\usepackage{amsmath}\n"
             "\\begin{document}\n"
             "%s\n"

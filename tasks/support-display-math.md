@@ -1,8 +1,24 @@
 # Support display math — `standalone` rejects `\[…\]` / `align*`; use `[varwidth]`
 
-**Status:** proposed — needs go-ahead. Created 2026-07-22. Found downstream in
+**Status:** fix applied + build-verified (2026-07-22) — **rollout pending** (push + mvp SHA bump; see
+"Consumer rollout"). Created 2026-07-22. Found downstream in
 `github.com/billsix/modelviewprojection` (its Sphinx `inlinetex` extension calls this tool): the
 book's ch04/ch06/ch14 matrix/aligned math fails to render.
+
+## Applied + verified (2026-07-22)
+
+`src/tex_exp_to_png.c` now emits `\documentclass[varwidth]{standalone}` (with an explaining comment);
+`CLAUDE.md` + `README.md` updated to match. Built the patched binary (`meson`/gcc) and ran it against
+the OLD pinned binary in mvp's image:
+
+| expression                        | OLD (bare `standalone`)      | NEW (`standalone[varwidth]`) |
+| --------------------------------- | ---------------------------- | ---------------------------- |
+| inline `$x^2$`                    | OK (38×34 px)                | OK (**38×34 px** — identical) |
+| display `\[ bmatrix … \vec … \]`  | FAILED (`Missing $ inserted`)| **OK (220×101 px)**          |
+| `align*`                          | FAILED (`Missing \endgroup`) | **OK (213×163 px)**          |
+
+Display math now renders; **inline crop is pixel-identical**, so `varwidth` doesn't regress existing
+expressions. Remaining: commit + push this repo, then the mvp rollout below.
 
 ## Problem
 

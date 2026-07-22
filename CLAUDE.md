@@ -1,9 +1,9 @@
 # texExpToPng
 
 A small C CLI that renders a LaTeX/TeX math expression to a PNG. It wraps the
-expression in a `standalone` LaTeX document, runs `latex` to produce a DVI, then
-`dvipng` to rasterize it at a chosen DPI. Used as a helper by other projects
-(e.g. modelviewprojection's Sphinx `inlinetex` extension).
+expression in a `standalone` (`varwidth`) LaTeX document, runs `latex` to produce
+a DVI, then `dvipng` to rasterize it at a chosen DPI. Used as a helper by other
+projects (e.g. modelviewprojection's Sphinx `inlinetex` extension).
 
 ## Status
 
@@ -17,8 +17,10 @@ expression in a `standalone` LaTeX document, runs `latex` to produce a DVI, then
 
 `src/tex_exp_to_png.c`:
 1. reads the expression from `--exp` (string) or `--file`,
-2. writes a minimal doc — `\documentclass{standalone}` + `\usepackage{amsmath}`
-   around the expression — to `formula.tex`,
+2. writes a minimal doc — `\documentclass[varwidth]{standalone}` +
+   `\usepackage{amsmath}` around the expression — to `formula.tex` (the
+   `varwidth` option is what lets display math — `\[…\]`, `align*` — typeset;
+   bare `standalone` only allows inline `$…$`),
 3. `latex formula.tex` → `formula.dvi`,
 4. `dvipng -D <size> -T tight -o <output> formula.dvi`.
 

@@ -1,8 +1,9 @@
 # texExpToPng
 
 A tiny C command-line tool that turns a LaTeX/TeX math expression into a PNG
-image. It wraps the expression in a `standalone` LaTeX document, compiles it with
-`latex`, and rasterizes the result with `dvipng`.
+image. It wraps the expression in a `standalone` (`varwidth`) LaTeX document,
+compiles it with `latex`, and rasterizes the result with `dvipng`. The `varwidth`
+option lets display math (`\[…\]`, `align*`) render, not just inline `$…$`.
 
 ## Usage
 
