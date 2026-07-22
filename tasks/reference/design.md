@@ -21,6 +21,7 @@ PNG, by shelling out to a system TeX Live: **expression → wrap in a tiny LaTeX
    ```latex
    \documentclass[varwidth]{standalone}
    \usepackage{amsmath}
+   \usepackage{xcolor}
    \begin{document}
    <expression>
    \end{document}
@@ -35,6 +36,8 @@ PNG, by shelling out to a system TeX Live: **expression → wrap in a tiny LaTeX
      `tasks/archive/2026/07/22/support-display-math.md`; a downstream book, modelviewprojection, needs
      matrix/aligned math.)*
    - **`amsmath`** provides `bmatrix`/`align*`/`\text`, etc. Present since the first C version.
+   - **`xcolor`** provides `\textcolor{…}{…}` (colored math — the book's perspective
+     chapter highlights terms in red). Added 2026-07-22.
 2. **`latex formula.tex`** → `formula.dvi`. (Not `pdflatex`; DVI is what `dvipng` consumes.)
 3. **`dvipng -D <size> -T tight [-bg …] [-fg …] -o <output> formula.dvi`** → the PNG. `-T tight` is the
    tight bounding box; `-D <size>` is the DPI (`--size`).

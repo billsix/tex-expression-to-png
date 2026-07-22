@@ -23,14 +23,15 @@ texExpToPng --file expr.tex --size 800 --bg Transparent --fg "rgb 1 1 1" -o out.
   default is dvipng's black-on-white). Use them for transparent-overlay output.
 
 The expression may be inline (`$…$`) or display math (`\[…\]`, `align*`,
-`equation*`) — `amsmath` (matrices, aligned equations) is available.
+`equation*`) — `amsmath` (matrices, aligned equations) and `xcolor`
+(`\textcolor`) are available.
 
 Requires `latex` and `dvipng` (TeX Live) on `PATH`.
 
 ## How it works
 
 It writes a tiny LaTeX document — `\documentclass[varwidth]{standalone}` +
-`\usepackage{amsmath}` wrapped around your expression — to `formula.tex` in the
+`\usepackage{amsmath}` + `\usepackage{xcolor}` wrapped around your expression — to `formula.tex` in the
 current directory, runs `latex` to get a DVI, then `dvipng -D <size> -T tight` to
 crop and rasterize it to the PNG. Because the temp files are written to the
 working directory, run it in a scratch dir. See `tasks/reference/design.md` for

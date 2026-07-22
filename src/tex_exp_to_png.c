@@ -83,6 +83,8 @@ int main(int argc, char** argv) {
                cropping tight. */
             "\\documentclass[varwidth]{standalone}\n"
             "\\usepackage{amsmath}\n"
+            /* xcolor: expressions may use \textcolor{...}{...} (colored math). */
+            "\\usepackage{xcolor}\n"
             "\\begin{document}\n"
             "%s\n"
             "\\end{document}\n",

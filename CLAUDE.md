@@ -22,9 +22,10 @@ projects (e.g. modelviewprojection's Sphinx `inlinetex` extension).
 `src/tex_exp_to_png.c`:
 1. reads the expression from `--exp` (string) or `--file`,
 2. writes a minimal doc — `\documentclass[varwidth]{standalone}` +
-   `\usepackage{amsmath}` around the expression — to `formula.tex` (the
-   `varwidth` option is what lets display math — `\[…\]`, `align*` — typeset;
-   bare `standalone` only allows inline `$…$`),
+   `\usepackage{amsmath}` + `\usepackage{xcolor}` around the expression — to
+   `formula.tex` (the `varwidth` option lets display math — `\[…\]`, `align*` —
+   typeset, which bare `standalone` rejects; `amsmath` gives matrices/aligned
+   environments; `xcolor` gives `\textcolor{…}{…}`),
 3. `latex formula.tex` → `formula.dvi`,
 4. `dvipng -D <size> -T tight [-bg …] [-fg …] -o <output> formula.dvi`.
 
@@ -85,6 +86,7 @@ Fedora-44 + podman family template. `make` targets:
     needs `-f` to be re-runnable (the `fedora/43`→`44` dnf-cache item is done).
   - [`tasks/add-sanitizer-gate.md`](tasks/add-sanitizer-gate.md) — proposed
     ASan/UBSan(trap) image-build gate, mirroring spimulator's.
-- Recently done: `standalone[varwidth]` display-math fix and the `--bg/--fg` docs
-  (both folded into this file + the reference doc);
-  `tasks/archive/2026/07/22/support-display-math.md`.
+- Recently done (2026-07-22): the `standalone[varwidth]` display-math fix, a
+  `\usepackage{xcolor}` add (for `\textcolor` in the book's perspective chapter),
+  and the `--bg/--fg` docs — all folded into this file + `tasks/reference/design.md`
+  (`tasks/archive/2026/07/22/support-display-math.md`).
