@@ -1,6 +1,10 @@
 # Document the --bg/--fg CLI options in CLAUDE.md and README.md
 
-**Status:** proposed — needs go-ahead
+**Status:** complete
+**Completed:** 2026-07-22 — folded into the texExpToPng design-doc pass: `--bg/-b` and `--fg/-g` are
+now documented in `README.md` (options list + a transparent-overlay example), in `CLAUDE.md` (CLI
+section + the `[-bg …] [-fg …]` in "How it works" step 4), and in `tasks/reference/design.md` (CLI
+contract table). No behavior change.
 **Created:** 2026-07-09
 
 ## Goal

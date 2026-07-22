@@ -11,7 +11,11 @@ projects (e.g. modelviewprojection's Sphinx `inlinetex` extension).
 - **Deps:** `glib-2.0` (option parsing, file I/O, `g_spawn_command_line_sync`);
   libm (linked, unused). At runtime it shells out to **`latex`** and **`dvipng`**
   from TeX Live.
-- Single source file: `src/tex_exp_to_png.c` (~139 lines).
+- Single source file: `src/tex_exp_to_png.c` (~156 lines).
+
+> **Design deep-dive:** `tasks/reference/design.md` — the *why* behind the
+> pipeline, the LaTeX template, the CLI, and the container build. Read it before
+> changing any of those.
 
 ## How it works
 
@@ -22,19 +26,30 @@ projects (e.g. modelviewprojection's Sphinx `inlinetex` extension).
    `varwidth` option is what lets display math — `\[…\]`, `align*` — typeset;
    bare `standalone` only allows inline `$…$`),
 3. `latex formula.tex` → `formula.dvi`,
-4. `dvipng -D <size> -T tight -o <output> formula.dvi`.
+4. `dvipng -D <size> -T tight [-bg …] [-fg …] -o <output> formula.dvi`.
 
-It checks each subprocess's exit status and prints the tool's stderr on failure.
+It checks each subprocess's exit status and, on failure, prints the tool's
+stderr and `exit(EXIT_FAILURE)`s. **`formula.tex`/`.dvi` are written in the
+current working directory** (relative paths, not a temp dir) — so callers run it
+in a scratch dir, and a failed `latex` leaves `formula.log` there with the *real*
+LaTeX error (the tool itself only prints a one-line "latex command failed").
 
 ## CLI
 
 ```
 texExpToPng --exp "E = 5 + m c^2" --size 800 --output out.png
 texExpToPng --file expr.tex       --size 800 --output out.png
+# transparent white glyphs (for overlay use):
+texExpToPng --file expr.tex --size 800 --bg Transparent --fg "rgb 1 1 1" -o out.png
 ```
 
-`--exp/-e` expression string · `--file/-f` read from file · `--size/-s` DPI
-(required) · `--output/-o` PNG path (required).
+- `--exp/-e` expression string · `--file/-f` read from file (**`--file` wins if
+  both are given**) · `--size/-s` DPI *(required)* · `--output/-o` PNG path
+  *(required)*.
+- `--bg/-b` · `--fg/-g` — dvipng background / foreground colors, passed through as
+  `-bg`/`-fg`. **Optional**, omitted by default so dvipng's black-on-white is
+  preserved for existing callers; set them for transparent-overlay rendering
+  (e.g. `--bg Transparent --fg "rgb 1 1 1"`).
 
 ## Build / container workflow
 
@@ -60,8 +75,16 @@ Fedora-44 + podman family template. `make` targets:
 - Clang-format: Google style, no include sorting. `lint.sh` runs `clang-tidy`.
 - On shell exit, `format.sh` + `lint.sh` run automatically (a `~/.bashrc` hook).
 
-## Tasks (in-flight)
+## Reference & tasks
 
-- [`tasks/container-build-cleanup.md`](tasks/container-build-cleanup.md) — the
-  `exit()` bashrc trap drops the shell exit code; the `fedora/43` dnf cache path
-  should be `44`; `buildDebug.sh`'s `ln -s` needs `-f` to be re-runnable.
+- **Design reference:** [`tasks/reference/design.md`](tasks/reference/design.md) —
+  the standing design/rationale doc (pipeline, LaTeX template, CLI, container).
+- In-flight (`tasks/`):
+  - [`tasks/container-build-cleanup.md`](tasks/container-build-cleanup.md) — the
+    `exit()` bashrc trap drops the shell exit code; `buildDebug.sh`'s `ln -s`
+    needs `-f` to be re-runnable (the `fedora/43`→`44` dnf-cache item is done).
+  - [`tasks/add-sanitizer-gate.md`](tasks/add-sanitizer-gate.md) — proposed
+    ASan/UBSan(trap) image-build gate, mirroring spimulator's.
+- Recently done: `standalone[varwidth]` display-math fix and the `--bg/--fg` docs
+  (both folded into this file + the reference doc);
+  `tasks/archive/2026/07/22/support-display-math.md`.
