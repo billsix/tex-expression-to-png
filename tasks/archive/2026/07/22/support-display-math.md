@@ -1,9 +1,16 @@
 # Support display math — `standalone` rejects `\[…\]` / `align*`; use `[varwidth]`
 
-**Status:** fix applied + build-verified (2026-07-22) — **rollout pending** (push + mvp SHA bump; see
-"Consumer rollout"). Created 2026-07-22. Found downstream in
-`github.com/billsix/modelviewprojection` (its Sphinx `inlinetex` extension calls this tool): the
-book's ch04/ch06/ch14 matrix/aligned math fails to render.
+**Status:** complete
+**Completed:** 2026-07-22 (fix applied + build-verified in this repo). The downstream **mvp rollout**
+(bump the SHA-pin + rebuild) is a separate, already-tracked task in
+`github.com/billsix/modelviewprojection` (`tasks/texexptopng-standalone-display-math.md`); Bill's
+commit/push of this repo is his routine git step. Nothing further is owed *here*.
+Created 2026-07-22. Found downstream in `github.com/billsix/modelviewprojection` (its Sphinx
+`inlinetex` extension calls this tool): the book's ch04/ch06/ch14 matrix/aligned math fails to render.
+
+**Durable knowledge** ("why `varwidth`") is preserved in-repo where it's always seen — the code
+comment at `src/tex_exp_to_png.c` and `CLAUDE.md` "How it works" step 2 — so no separate reference doc
+is warranted for this single-file tool.
 
 ## Applied + verified (2026-07-22)
 
