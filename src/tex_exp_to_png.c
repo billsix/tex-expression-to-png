@@ -75,20 +75,21 @@ int main(int argc, char** argv) {
     fatal_error();
   }
 
-  g_fprintf(tex_file,
-            /* varwidth: the bare `standalone` class typesets its body in
-               restricted horizontal mode and rejects display math (\[...\],
-               align*, equation*); the varwidth option sets a natural-width
-               paragraph that supports display math + line breaks while still
-               cropping tight. */
-            "\\documentclass[varwidth]{standalone}\n"
-            "\\usepackage{amsmath}\n"
-            /* xcolor: expressions may use \textcolor{...}{...} (colored math). */
-            "\\usepackage{xcolor}\n"
-            "\\begin{document}\n"
-            "%s\n"
-            "\\end{document}\n",
-            expression);
+  g_fprintf(
+      tex_file,
+      /* varwidth: the bare `standalone` class typesets its body in
+         restricted horizontal mode and rejects display math (\[...\],
+         align*, equation*); the varwidth option sets a natural-width
+         paragraph that supports display math + line breaks while still
+         cropping tight. */
+      "\\documentclass[varwidth]{standalone}\n"
+      "\\usepackage{amsmath}\n"
+      /* xcolor: expressions may use \textcolor{...}{...} (colored math). */
+      "\\usepackage{xcolor}\n"
+      "\\begin{document}\n"
+      "%s\n"
+      "\\end{document}\n",
+      expression);
   fclose(tex_file);
 
   gchar* stdout_output = NULL;
