@@ -28,7 +28,7 @@ PNG, by shelling out to a system TeX Live: **expression → wrap in a tiny LaTeX
    ```
    - **`standalone`** crops the output tightly to the content (no page margins) — exactly what you
      want for an image you'll drop inline in a doc.
-   - **`[varwidth]`** is load-bearing: the *bare* `standalone` class typesets its body in restricted
+   - **`[varwidth]`** is required: the *bare* `standalone` class typesets its body in restricted
      horizontal mode and **rejects display math** (`\[…\]`, `align*`, `equation*` → `! Missing $
      inserted` / `Bad math environment delimiter`). `varwidth` sets a natural-width paragraph that
      admits display math **and** line breaks, while still cropping tight. Inline `$…$` renders
