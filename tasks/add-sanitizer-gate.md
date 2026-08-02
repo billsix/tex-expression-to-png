@@ -1,6 +1,8 @@
 # Add an ASan + UBSan(trap) build gate to the image
 
 **Status:** proposed — needs go-ahead
+**Priority:** 5
+**Difficulty:** 5
 **Created:** 2026-06-16
 
 ## Goal

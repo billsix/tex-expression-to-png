@@ -1,6 +1,8 @@
 # Fix bashrc exit() trap, dnf cache path, buildDebug symlink
 
 **Status:** in progress — cache-path item resolved 2026-07-07; two items remain
+**Priority:** 4
+**Difficulty:** 2
 **Created:** 2026-06-13
 
 ## Goal
