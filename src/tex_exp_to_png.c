@@ -3,6 +3,25 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 
+/* Default LeakSanitizer OFF for the ASan build gate. main()'s fatal_error()
+   paths exit() without freeing the live glib allocations, and glib keeps
+   one-time internal allocations alive — both are benign exit-time leaks, not
+   corruption. The gate is for memory *corruption* (use-after-free, overflow),
+   which ASan still catches with leak detection off. Compiled only under ASan
+   so the normal (non-sanitized) build is untouched. */
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define TEXEXP_ASAN 1
+#endif
+#endif
+#if defined(__SANITIZE_ADDRESS__)
+#define TEXEXP_ASAN 1
+#endif
+#ifdef TEXEXP_ASAN
+const char* __asan_default_options(void);
+const char* __asan_default_options(void) { return "detect_leaks=0"; }
+#endif
+
 _Noreturn void fatal_error(void) { exit(EXIT_FAILURE); }
 
 gchar* read_file(const char* filename) {

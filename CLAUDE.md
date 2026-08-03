@@ -68,6 +68,13 @@ Fedora-44 + podman family template. `make` targets:
 - `make format` — clang-format the C.
 - `make example` — render `$$ E = 5 + m*c^2 $$` at 800 DPI to `./output/output.png`.
 
+`make image` gates the build on `meson test` (a `smoke` render + a TeX-free
+`usage-error` case in `tests/`) and, by default (`RUN_SANITIZERS=1`), rebuilds and
+re-runs that suite under **UBSan-trap** and **ASan**; `make image RUN_SANITIZERS=0`
+skips the sanitizer gate. LSan is defaulted off (guarded `__asan_default_options`
+in the source, ASan-only) so the gate targets corruption, not benign exit-time
+leaks.
+
 `entrypoint/entrypoint.sh` is the image's app entrypoint:
 `texExpToPng --exp "$1" --size "$2" --output /output/"$3"`.
 
@@ -84,8 +91,10 @@ Fedora-44 + podman family template. `make` targets:
   - [`tasks/container-build-cleanup.md`](tasks/container-build-cleanup.md) — the
     `exit()` bashrc trap drops the shell exit code; `buildDebug.sh`'s `ln -s`
     needs `-f` to be re-runnable (the `fedora/43`→`44` dnf-cache item is done).
-  - [`tasks/add-sanitizer-gate.md`](tasks/add-sanitizer-gate.md) — proposed
-    ASan/UBSan(trap) image-build gate, mirroring spimulator's.
+  - [`tasks/add-sanitizer-gate.md`](tasks/add-sanitizer-gate.md) — ASan/UBSan(trap)
+    image-build gate, mirroring spimulator's. Implemented + source-verified
+    2026-08-03 (`tests/` harness, meson/Dockerfile/Makefile wiring); one
+    confirmatory containerized `make image` still to run before archiving.
 - Recently done (2026-07-22): the `standalone[varwidth]` display-math fix, a
   `\usepackage{xcolor}` add (for `\textcolor` in the book's perspective chapter),
   and the `--bg/--fg` docs — all folded into this file + `tasks/reference/design.md`

@@ -57,7 +57,41 @@ RUN  --mount=type=cache,target=/var/cache/libdnf5 \
 # compile_commands.json for clangd.
 COPY meson.build /root/texExpToPng/meson.build
 COPY src /root/texExpToPng/src
+COPY tests /root/texExpToPng/tests
 RUN /usr/local/bin/buildDebug.sh
+
+# Gate the normal build on the test suite (smoke render + TeX-free usage error).
+# These are the meson test() targets the sanitizer gate below re-runs under
+# ASan/UBSan; a red test here fails the image.
+RUN meson test -C /root/texExpToPng/builddir --print-errorlogs
+
+# Sanitizer gate (opt-in via RUN_SANITIZERS=1; `make image` sets it). Build
+# texExpToPng a second/third time — under UBSan(trap) and ASan — in separate
+# meson setup dirs (the normal install build above is untouched) and run the
+# test suite under each. A surviving UB traps (SIGILL); a memory error aborts;
+# either fails the image the same way the plain `meson test` step does. Trap
+# mode links no runtime (low friction) and is the reliable gate — diagnostic
+# UBSan under-reports. ASan leak detection is defaulted off in
+# tex_exp_to_png.c (__asan_default_options): the gate is for corruption, not
+# the intentional exit-time leaks on fatal_error() paths. clang/meson/ninja and
+# the ASan runtime already ship in the image, so no new packages.
+ARG RUN_SANITIZERS=0
+RUN if [ "$RUN_SANITIZERS" = "1" ]; then \
+      set -e; \
+      echo '== UBSan (trap) gate =='; \
+      CC=clang meson setup /tmp/san-ubsan /root/texExpToPng --buildtype=debug \
+          -Dwarning_level=3 \
+          -Dc_args='-fsanitize=undefined -fsanitize-trap=undefined' \
+          -Dc_link_args='-fsanitize=undefined -fsanitize-trap=undefined'; \
+      meson compile -C /tmp/san-ubsan; \
+      meson test -C /tmp/san-ubsan --no-rebuild --print-errorlogs; \
+      echo '== ASan gate =='; \
+      CC=clang meson setup /tmp/san-asan /root/texExpToPng --buildtype=debug \
+          -Dwarning_level=3 -Db_sanitize=address; \
+      meson compile -C /tmp/san-asan; \
+      meson test -C /tmp/san-asan --no-rebuild --print-errorlogs; \
+      rm -rf /tmp/san-ubsan /tmp/san-asan; \
+    fi
 
 
 ENTRYPOINT ["/entrypoint.sh"]

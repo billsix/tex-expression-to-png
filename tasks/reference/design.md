@@ -83,7 +83,9 @@ directory** (not a `mkstemp` temp dir). Consequences:
   the user.
 - glib memory discipline: `g_free` on each captured stdout/stderr after use, on the built
   `dvipng_cmd`, and on `expression`/`filename`/`output` at the end. (Frees on the `fatal_error` paths
-  are skipped — the process is exiting anyway.)
+  are skipped — the process is exiting anyway.) The ASan gate defaults LeakSanitizer **off** (a
+  guarded, ASan-only `__asan_default_options` → `detect_leaks=0`) precisely so these benign
+  exit-time leaks don't fail the gate, which targets memory *corruption*.
 - Only two libraries: **glib-2.0** (option parsing, file I/O `g_file_get_contents`/`g_fopen`/
   `g_fprintf`, subprocess `g_spawn_command_line_sync`, `g_strdup_printf`) and **libm** (linked,
   currently unused — see `meson.build`).
@@ -99,7 +101,19 @@ directory** (not a `mkstemp` temp dir). Consequences:
   (Dev builds are clang/debug/high-warnings; a plain `gcc` build also works — that's what a host or a
   non-clang image uses.)
 - **`meson.build`**: `project('texExpToPng','c', c_std=gnu11)`, deps `glib-2.0` + `find_library('m')`,
-  one source, `install: true`.
+  one source, `install: true`, plus two `test()` targets (`smoke`, `usage-error`) in `tests/`.
+- **Tests & the sanitizer gate** (`tests/`, added 2026-08-03 — `tasks/add-sanitizer-gate.md`):
+  - `tests/smoke.sh` renders `$E = m c^2$` at 200 DPI in a `mktemp -d` scratch dir (formula.* are
+    CWD-relative) and checks exit 0 + non-empty + PNG magic bytes; needs `latex`/`dvipng`. The
+    expression **must carry its own `$…$`** — the tool writes it verbatim into the LaTeX body.
+  - `tests/usage_error.sh` is TeX-free (missing `--size`/`--output` ⇒ non-zero exit), gating the
+    pure-C option-parse/validation paths without TeX Live.
+  - Each is a separate `meson test()`; meson is the "run all, report all red" accumulator, so the
+    scripts stay single-assertion + `set -e` (safe-by-shape, like `format.sh`).
+  - `make image` runs `meson test` on the normal build, then (default `RUN_SANITIZERS=1`) rebuilds
+    texExpToPng under **UBSan-trap** and **ASan** in separate `/tmp/san-*` setup dirs and re-runs the
+    suite under each; any UB trap / memory error fails the image. `RUN_SANITIZERS=0` skips it.
+    `meson.build` defaults are untouched — the sanitized builds are separate setups.
 - **Dockerfile toolchain**: Fedora 44 with the dnf-cache mount idiom; installs
   clang/clang-tools-extra/gcc/gdb/lldb/meson/ninja/glib2-devel and **TeX Live** (`texlive`,
   `texlive-dvipng`, `texlive-standalone`, `texlive-anyfontsize`, `texlive-dvisvgm`). `ARG USE_EMACS`

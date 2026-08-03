@@ -4,6 +4,10 @@
 # need the features
 USE_EMACS=1
 
+# Gate the image on a UBSan(trap)+ASan build+test of texExpToPng. Set
+# RUN_SANITIZERS=0 for a quicker image that skips the sanitizer gate.
+RUN_SANITIZERS ?= 1
+
 CONTAINER_CMD = podman
 CONTAINER_NAME = tex-expression-to-png
 
@@ -15,6 +19,7 @@ TMUX_MOUNT := $(shell if [ -f $(TMUX_REAL_PATH) ]; then echo "-v $(TMUX_REAL_PAT
 SOURCE_FILES_TO_MOUNT = \
      -v ./meson.build:/root/texExpToPng/meson.build:Z \
      -v ./src/tex_exp_to_png.c:/root/texExpToPng/src/tex_exp_to_png.c:Z \
+     -v ./tests:/root/texExpToPng/tests:Z \
 
 SHELL_SCRIPTS_TO_MOUNT = \
     -v ./entrypoint/shell.sh:/usr/local/bin/shell.sh:Z \
@@ -45,6 +50,7 @@ image: ## Build podman image to run the examples
 	$(CONTAINER_CMD) build \
                          -t $(CONTAINER_NAME) \
                          --build-arg USE_EMACS=$(USE_EMACS) \
+                         --build-arg RUN_SANITIZERS=$(RUN_SANITIZERS) \
                          $(ELPA_MOUNT) \
 	                 $(TMUX_MOUNT) \
                          .

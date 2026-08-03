@@ -1,9 +1,70 @@
 # Add an ASan + UBSan(trap) build gate to the image
 
-**Status:** proposed — needs go-ahead
+**Status:** implemented + source-level verified 2026-08-03 — one confirmatory
+containerized `make image` (default `RUN_SANITIZERS=1`) still to run (skipped
+here on purpose, see "Verification" below). Not archived until that green.
 **Priority:** 5
 **Difficulty:** 5
 **Created:** 2026-06-16
+
+## What was done (2026-08-03)
+
+Implemented the whole gate, closing the "nothing to gate on" prerequisite first.
+
+- **Test harness (new `tests/`, both `meson test()` targets):**
+  - `tests/smoke.sh` — renders `$E = m c^2$` at 200 DPI in a `mktemp -d` scratch
+    dir (formula.tex/.dvi are CWD-relative) and asserts exit 0, non-empty output,
+    and PNG magic bytes (`89504e47`). Needs `latex` + `dvipng`.
+  - `tests/usage_error.sh` — TeX-free: `--exp x` with no `--size`/`--output` must
+    exit non-zero (hits `print_usage` + `fatal_error`). Gates the pure-C
+    option-parse/validation paths independent of TeX Live.
+  - Wired in `meson.build` with `env: {TEXEXP_BIN: …full_path()}`, `depends:` the
+    exe, `smoke` given `timeout: 120`. meson runs each as its own `test()` and
+    reports every failure — that is the "run all, report all red" accumulator, so
+    the shell scripts stay single-assertion + `set -e` (safe-by-shape, matching
+    the repo's format gate).
+- **Bug found + fixed in the suggested smoke expression:** the task's own
+  `'E = m c^2'` is written verbatim into the LaTeX body with no math delimiters →
+  `! Missing $ inserted`, latex exits 1 (real `make example` wraps its arg in
+  `$$…$$`). Changed the smoke expression to `'$E = m c^2$'`. Caught precisely
+  because the gate actually executes latex.
+- **LSan decision — defaulted OFF** via a guarded `__asan_default_options`
+  returning `detect_leaks=0` in `src/tex_exp_to_png.c`. The gate targets
+  corruption, not the benign exit-time leaks on `fatal_error()` paths. **Guarded**
+  (`__has_feature(address_sanitizer)` / `__SANITIZE_ADDRESS__`) so the hook is
+  compiled *only* under ASan — the shipped normal build is byte-for-byte
+  unaffected (confirmed: symbol present in the ASan binary, absent in the normal
+  one). Did **not** rewrite the error-path frees; left as-is per "focus the gate
+  on corruption."
+- **Dockerfile:** `COPY tests …`, a normal `RUN meson test … builddir` gate after
+  `buildDebug.sh`, then `ARG RUN_SANITIZERS=0` + the two-setup UBSan-trap/ASan
+  block (`set -e`, separate `/tmp/san-*` dirs, `--no-rebuild`, cleaned up). No new
+  packages (clang/meson/ninja + ASan runtime already ship).
+- **Makefile:** `RUN_SANITIZERS ?= 1` + `--build-arg RUN_SANITIZERS=$(RUN_SANITIZERS)`
+  in `image`; added `-v ./tests:…:Z` to `SOURCE_FILES_TO_MOUNT` so `make shell`
+  can run the suite too.
+
+## Verification (2026-08-03)
+
+Verified at **source level in the sandbox**, which has the identical toolchain the
+image uses (Fedora 44 clang 22 / gcc, meson, glib-2.0 2.88, and real
+`latex`+`dvipng`). Ran the exact command sequences the Dockerfile runs, in
+out-of-tree build dirs against the real source:
+
+- Normal (gcc) build: `smoke` + `usage-error` both **OK**.
+- UBSan-trap build (`-fsanitize=undefined -fsanitize-trap=undefined`): both **OK**
+  — no UB trapped.
+- ASan build (`-Db_sanitize=address`): both **OK** — no memory error; LSan hook
+  confirmed suppressing leaks (no leak report on the leak-on-exit usage path).
+- Both shipped/normal and ASan configs compile with **0 warnings** under
+  `-Wall -Wextra`.
+
+**Not run (on purpose):** the full containerized `make image` — ~10 agents share a
+32G container store, so a heavy TeX Live image build was out of budget. The
+Dockerfile/Makefile *wiring* (COPY tests, build-arg threading, the `if
+RUN_SANITIZERS` block) is therefore un-exercised by an actual build even though the
+gate *logic* it runs is verified. **Follow-up for Bill:** one `make image` (default
+flags) to confirm the container assembly, then archive this doc.
 
 ## Goal
 
@@ -148,9 +209,8 @@ on memory *corruption*, which is the point.)
 - LSan decision recorded (defaulted off via the hook, vs. error-path frees fixed).
 - Normal install build and `make example` output are unchanged.
 
-## Open questions
+## Open questions — resolved
 
-- Should the smoke test assert PNG *content* (`file`/magic-bytes) or just
-  non-empty? Non-empty + exit 0 is the cheap floor; magic-bytes is a small upgrade.
-- Worth adding the TeX-free usage-error case so the gate has coverage independent
-  of TeX Live being functional? (Recommended — keeps pure-C paths gated.)
+- PNG content vs non-empty? **Both** — smoke.sh checks non-empty *and* the PNG
+  magic bytes (`89504e47`) via `od`. Cheap and catches a truncated/garbage write.
+- TeX-free usage-error case? **Added** (`tests/usage_error.sh`), as recommended.

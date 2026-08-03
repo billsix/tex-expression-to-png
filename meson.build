@@ -17,3 +17,21 @@ texExpToPng_exe = executable('texExpToPng',
   dependencies: [glib_dep, math_dep],
   install: true
 )
+
+# Tests — the harness the ASan/UBSan gate runs. `smoke` renders a real PNG
+# (needs latex + dvipng); `usage-error` is TeX-free and gates the pure-C
+# option-parsing/validation paths. meson runs each as a separate test() and
+# reports every failure, so the "run all, report all red" job lives here, not
+# in the shell scripts.
+smoke_test = find_program('tests/smoke.sh')
+test('smoke', smoke_test,
+  env: {'TEXEXP_BIN': texExpToPng_exe.full_path()},
+  depends: texExpToPng_exe,
+  timeout: 120
+)
+
+usage_error_test = find_program('tests/usage_error.sh')
+test('usage-error', usage_error_test,
+  env: {'TEXEXP_BIN': texExpToPng_exe.full_path()},
+  depends: texExpToPng_exe
+)
