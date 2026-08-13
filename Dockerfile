@@ -6,6 +6,8 @@ ARG USE_EMACS=0
 COPY entrypoint/dotfiles/.lldbinit /root/.lldbinit
 COPY entrypoint/dotfiles/.emacs.d/install-melpa-packages.el /root/.emacs.d/install-melpa-packages.el
 COPY .clang-format /root
+COPY entrypoint/01-install-base.sh /usr/local/bin
+COPY entrypoint/02-install-emacs.sh /usr/local/bin
 COPY entrypoint/buildDebug.sh /usr/local/bin
 COPY entrypoint/format.sh /usr/local/bin
 COPY entrypoint/lint.sh /usr/local/bin
@@ -13,34 +15,22 @@ COPY entrypoint/shell.sh /usr/local/bin
 COPY entrypoint/entrypoint.sh /
 
 
+# System-package installation lives in per-group scripts (entrypoint/0N-install-*.sh),
+# host-runnable with no container runtime; the scripts take no options -- WHICH optional
+# groups run is decided here by the ARG `if` block. The dnf cache mount, the tsflags
+# `sed`, and keepcache stay in the Dockerfile (build plumbing). 01-install-base.sh does
+# `dnf upgrade` + the base (toolchain + TeX Live) install; the emacs MELPA bootstrap and
+# the ls alias are config, so they stay here under the USE_EMACS check.
 RUN  --mount=type=cache,target=/var/cache/libdnf5 \
      --mount=type=cache,target=/var/lib/dnf \
      sed -i -e "s@tsflags=nodocs@#tsflags=nodocs@g" /etc/dnf/dnf.conf && \
      echo "keepcache=True" >> /etc/dnf/dnf.conf && \
-     dnf upgrade -y && \
+     /usr/local/bin/01-install-base.sh && \
      if [ "$USE_EMACS" = "1" ]; then \
-       dnf install -y \
-                   emacs && \
+       /usr/local/bin/02-install-emacs.sh && \
        emacs --batch --load /root/.emacs.d/install-melpa-packages.el && \
        echo "alias ls='ls --color=auto'" >> ~/.bashrc ;\
      fi ; \
-    dnf install -y clang \
-                   clang-tools-extra \
-                   gcc \
-                   gdb \
-                   git \
-                   glib \
-                   glib2-devel \
-                   lldb \
-                   meson \
-                   ninja \
-                   texlive \
-                   texlive-anyfontsize \
-                   texlive-dvipng \
-                   texlive-dvisvgm \
-                   texlive-standalone \
-                   tmux \
-                   which && \
     echo "exit() {" >> ~/.bashrc && \
     echo "    echo "Formatting on shell exit"" >> ~/.bashrc && \
     echo "    format.sh" >> ~/.bashrc && \
