@@ -1,5 +1,5 @@
 #!/bin/env bash
 
-cd /root/texExpToPng
+[ -d /root/texExpToPng ] && cd /root/texExpToPng
 
 run-clang-tidy . -fix
