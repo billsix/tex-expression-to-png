@@ -192,8 +192,8 @@ on memory *corruption*, which is the point.)
 - **In-container only**, per the working arrangement. Trap UBSan needs no extra
   packages; ASan's runtime ships with clang — both already in the image. No
   permanent change to what the image ships beyond the opt-in gate itself.
-- Nested-podman runs of `make image` need `--cgroups=disabled` on the inner
-  `podman build` (transient add-run-revert, pre-authorized).
+- Nested-podman: `make image` needs no flags (`podman build` doesn't take `--cgroups`);
+  run targets auto-apply `--cgroups=disabled` via `PODMAN_RUN_FLAGS` when nested.
 - Don't touch `meson.build`'s default options; sanitized builds are separate
   setup dirs.
 
