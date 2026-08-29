@@ -55,15 +55,33 @@ image: ## Build podman image to run the examples
 	                 $(TMUX_MOUNT) \
                          .
 
-.PHONY: shell
-shell: format ## Get Shell into a ephermeral container made from the image
-	$(CONTAINER_CMD) run -it --rm \
+# --- shell / shell-exec share ONE container invocation, defined here so the two
+# targets can never drift. Scoped to this pair ONLY. See runClaudeInContainer
+# tasks/add-shell-exec-target.md for the design.
+# NOTE: this project mounts only SELECTED files (meson.build, src/, tests/) at
+# REPO_MOUNT, not the whole repo -- so shell-exec CMD='...' always works, but
+# SCRIPT=path only resolves for a script under one of those mounted paths.
+SHELL_RUN_FLAGS = \
 		--entrypoint /bin/bash \
 		$(FILES_TO_MOUNT) \
-                $(ELPA_MOUNT) \
-                $(TMUX_MOUNT) \
-		$(CONTAINER_NAME) \
-		/usr/local/bin/shell.sh
+		$(ELPA_MOUNT) \
+		$(TMUX_MOUNT)
+
+# In-container mount root (matches SOURCE_FILES_TO_MOUNT + shell.sh's `cd`).
+REPO_MOUNT = /root/texExpToPng
+
+# shell-exec payload: cd to the mount root (independent of shell.sh's own cd), then
+# run the inline CMD, else the (mounted) SCRIPT. Prefers CMD when both are set.
+SHELL_EXEC_ARGS = -c 'cd $(REPO_MOUNT) && $(if $(CMD),$(CMD),exec bash $(SCRIPT))'
+
+.PHONY: shell
+shell: format ## Get Shell into a ephermeral container made from the image
+	$(CONTAINER_CMD) run -it --rm $(SHELL_RUN_FLAGS) $(CONTAINER_NAME) /usr/local/bin/shell.sh
+
+.PHONY: shell-exec
+shell-exec: image ## Run a script/command in the container env (no TTY): make shell-exec SCRIPT=path | CMD='...'
+	@[ -n "$(SCRIPT)$(CMD)" ] || { echo 'usage: make shell-exec SCRIPT=<mounted path> | CMD="..."'; exit 2; }
+	$(CONTAINER_CMD) run --rm $(SHELL_RUN_FLAGS) $(CONTAINER_NAME) /usr/local/bin/shell.sh $(SHELL_EXEC_ARGS)
 
 
 # Refresh the vendored Emacs packages. Forces USE_EMACS=1 and rebuilds the image
