@@ -8,7 +8,7 @@ USE_EMACS=1
 # RUN_SANITIZERS=0 for a quicker image that skips the sanitizer gate.
 RUN_SANITIZERS ?= 1
 
-CONTAINER_CMD = podman
+CONTAINER_CMD ?= $(shell command -v podman >/dev/null 2>&1 && echo podman || echo docker)
 CONTAINER_NAME = tex-expression-to-png
 
 # Extra flags for every container `run`. Auto-set when running nested inside a

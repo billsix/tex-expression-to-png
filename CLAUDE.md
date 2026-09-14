@@ -19,21 +19,13 @@ projects (e.g. modelviewprojection's Sphinx `inlinetex` extension).
 
 ## How it works
 
-`src/tex_exp_to_png.c`:
-1. reads the expression from `--exp` (string) or `--file`,
-2. writes a minimal doc — `\documentclass[varwidth]{standalone}` +
-   `\usepackage{amsmath}` + `\usepackage{xcolor}` around the expression — to
-   `formula.tex` (the `varwidth` option lets display math — `\[…\]`, `align*` —
-   typeset, which bare `standalone` rejects; `amsmath` gives matrices/aligned
-   environments; `xcolor` gives `\textcolor{…}{…}`),
-3. `latex formula.tex` → `formula.dvi`,
-4. `dvipng -D <size> -T tight [-bg …] [-fg …] -o <output> formula.dvi`.
-
-It checks each subprocess's exit status and, on failure, prints the tool's
-stderr and `exit(EXIT_FAILURE)`s. **`formula.tex`/`.dvi` are written in the
-current working directory** (relative paths, not a temp dir) — so callers run it
-in a scratch dir, and a failed `latex` leaves `formula.log` there with the *real*
-LaTeX error (the tool itself only prints a one-line "latex command failed").
+Pipeline (`src/tex_exp_to_png.c`): read expression from `--exp`/`--file` → wrap
+in a minimal `\documentclass[varwidth]{standalone}` doc written to `formula.tex`
+→ `latex` → `formula.dvi` → `dvipng -D <size> -T tight [-bg …] [-fg …]` → PNG. On
+any subprocess failure it prints the tool's stderr and exits non-zero. The
+step-by-step mechanics, the `varwidth`/`amsmath`/`xcolor` reasoning, and the
+CWD-relative temp-file / `formula.log`-has-the-real-error gotcha are in
+`tasks/reference/design.md`.
 
 ## CLI
 
@@ -71,9 +63,8 @@ Fedora-44 + podman family template. `make` targets:
 `make image` gates the build on `meson test` (a `smoke` render + a TeX-free
 `usage-error` case in `tests/`) and, by default (`RUN_SANITIZERS=1`), rebuilds and
 re-runs that suite under **UBSan-trap** and **ASan**; `make image RUN_SANITIZERS=0`
-skips the sanitizer gate. LSan is defaulted off (guarded `__asan_default_options`
-in the source, ASan-only) so the gate targets corruption, not benign exit-time
-leaks.
+skips the sanitizer gate. (LSan is defaulted off so the gate targets corruption,
+not benign exit-time leaks — see `tasks/reference/design.md`.)
 
 `entrypoint/entrypoint.sh` is the image's app entrypoint:
 `texExpToPng --exp "$1" --size "$2" --output /output/"$3"`.
@@ -86,16 +77,7 @@ leaks.
 ## Reference & tasks
 
 - **Design reference:** [`tasks/reference/design.md`](tasks/reference/design.md) —
-  the standing design/rationale doc (pipeline, LaTeX template, CLI, container).
-- In-flight (`tasks/`):
-  - [`tasks/container-build-cleanup.md`](tasks/container-build-cleanup.md) — the
-    `exit()` bashrc trap drops the shell exit code; `buildDebug.sh`'s `ln -s`
-    needs `-f` to be re-runnable (the `fedora/43`→`44` dnf-cache item is done).
-  - [`tasks/add-sanitizer-gate.md`](tasks/add-sanitizer-gate.md) — ASan/UBSan(trap)
-    image-build gate, mirroring spimulator's. Implemented + source-verified
-    2026-08-03 (`tests/` harness, meson/Dockerfile/Makefile wiring); one
-    confirmatory containerized `make image` still to run before archiving.
-- Recently done (2026-07-22): the `standalone[varwidth]` display-math fix, a
-  `\usepackage{xcolor}` add (for `\textcolor` in the book's perspective chapter),
-  and the `--bg/--fg` docs — all folded into this file + `tasks/reference/design.md`
-  (`tasks/archive/2026/07/22/support-display-math.md`).
+  the standing design/rationale doc (pipeline, LaTeX template, CLI, container,
+  sanitizer gate, consumers, and design history).
+- **In-flight work:** see `tasks/` (each open task doc is the live record);
+  completed work is under `tasks/archive/<YYYY>/<MM>/<DD>/`.
