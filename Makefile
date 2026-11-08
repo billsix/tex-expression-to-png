@@ -40,7 +40,9 @@ FILES_TO_MOUNT = $(SOURCE_FILES_TO_MOUNT) \
 
 # USE_EMACS=1 (the default) bind-mounts the whole vendored .emacs.d/ into the
 # container so an interactive `make shell` can *use* the vendored packages (:U
-# chowns it to the container user, :z relabels for SELinux). Set USE_EMACS=0 to
+# chowns it to the container user, :z relabels for SELinux). The image holds only the
+# Emacs binary; init.el byte-compiles the vendored elpa/ into this mount on Emacs's first
+# start (the .elc files are gitignored). Set USE_EMACS=0 to
 # skip the mount. To *refresh* the vendored elpa packages, use `make
 # update-emacs-packages` below.
 ifeq ($(USE_EMACS), 1)
