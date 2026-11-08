@@ -4,7 +4,6 @@ ARG USE_EMACS=0
 
 
 COPY entrypoint/dotfiles/.lldbinit /root/.lldbinit
-COPY entrypoint/dotfiles/.emacs.d/install-melpa-packages.el /root/.emacs.d/install-melpa-packages.el
 COPY .clang-format /root
 COPY entrypoint/01-install-base.sh /usr/local/bin
 COPY entrypoint/02-install-emacs.sh /usr/local/bin
@@ -19,8 +18,9 @@ COPY entrypoint/entrypoint.sh /
 # host-runnable with no container runtime; the scripts take no options -- WHICH optional
 # groups run is decided here by the ARG `if` block. The dnf cache mount, the tsflags
 # `sed`, and keepcache stay in the Dockerfile (build plumbing). 01-install-base.sh does
-# `dnf upgrade` + the base (toolchain + TeX Live) install; the emacs MELPA bootstrap and
-# the ls alias are config, so they stay here under the USE_EMACS check.
+# `dnf upgrade` + the base (toolchain + TeX Live) install; the ls alias is config, so it
+# stays here under the USE_EMACS check. Emacs packages are never installed here: `make
+# shell` mounts the vendored .emacs.d and init.el byte-compiles its elpa/ on first start.
 RUN  --mount=type=cache,target=/var/cache/libdnf5 \
      --mount=type=cache,target=/var/lib/dnf \
      sed -i -e "s@tsflags=nodocs@#tsflags=nodocs@g" /etc/dnf/dnf.conf && \
@@ -28,7 +28,6 @@ RUN  --mount=type=cache,target=/var/cache/libdnf5 \
      /usr/local/bin/01-install-base.sh && \
      if [ "$USE_EMACS" = "1" ]; then \
        /usr/local/bin/02-install-emacs.sh && \
-       emacs --batch --load /root/.emacs.d/install-melpa-packages.el && \
        echo "alias ls='ls --color=auto'" >> ~/.bashrc ;\
      fi ; \
     echo "exit() {" >> ~/.bashrc && \

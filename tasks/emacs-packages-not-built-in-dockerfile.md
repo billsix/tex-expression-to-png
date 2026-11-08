@@ -1,46 +1,35 @@
 # Emacs packages are not installed or compiled in the Dockerfile
 
-**Status:** in progress
-**Priority:** 3
-**Difficulty:** 1
-Created 2026-11-08 (William Emerison Six <billsix@gmail.com> asked for it).
-**Part of:** github.com/billsix/runClaudeInContainer `tasks/emacs-contract-conformance.md` (item 1, the
-build-time MELPA install, and item 5, the run-time compile).
+Done 2026-11-08 (William Emerison Six <billsix@gmail.com> asked for it). Part of github.com/billsix/runClaudeInContainer
+`tasks/emacs-contract-conformance.md` (the build-time MELPA install and the run-time compile items).
 
-## BLUF
+## What was wrong
 
-Under `USE_EMACS=1` the image build downloads and byte-compiles the whole MELPA set
-(`emacs --batch --load install-melpa-packages.el`), although `make shell` mounts the vendored packages
-over it. Done = the image installs only the Emacs binary, `init.el` byte-compiles the vendored `elpa/`
-on Emacs's first start, `make image` builds with no MELPA fetch, and Emacs starts cleanly against the
-mount.
+`entrypoint/02-install-emacs.sh` installed the Emacs binary, but the `Dockerfile` also copied
+`install-melpa-packages.el` and ran `emacs --batch --load` on it under `USE_EMACS=1`: a network download
+plus byte-compile of the MELPA set at image build. `make shell` then mounted the vendored
+`entrypoint/dotfiles/.emacs.d/` over `/root/.emacs.d`, so the result was never used.
 
-## Context
+## What changed
 
-- The Emacs contract: the `emacs-container-contract.md` reference doc in
-  github.com/billsix/runClaudeInContainer `tasks/reference/`. Worked example: github.com/billsix/Craft
-  `tasks/archive/2026/11/08/emacs-packages-not-built-in-dockerfile.md`.
-- Today: `entrypoint/02-install-emacs.sh` installs the binary, but the `Dockerfile` also copies
-  `install-melpa-packages.el` and runs `emacs --batch --load` on it in the install `RUN`. The Makefile
-  mounts the whole `.emacs.d/` over `/root/.emacs.d`, so the build-time packages are never used.
-  `init.el` has no run-time compile.
-- Decision: keep the whole-`.emacs.d` mount. The image bakes no Emacs config, so config edits stay live
-  without `make image`.
+- `Dockerfile`: the `emacs --batch` step and the `install-melpa-packages.el` `COPY` are gone; its comment
+  and `entrypoint/02-install-emacs.sh`'s header say the packages are vendored and compiled at run time.
+- `init.el` runs `(byte-recompile-directory package-user-dir 0)` after `(package-initialize)`; the first
+  Emacs start in `make shell` compiles the vendored packages into the mounted host `elpa/` (gitignored).
+- Kept the whole-`.emacs.d` mount: the image bakes no Emacs config, so config edits stay live.
+- The Makefile's `ELPA_MOUNT` comment describes this.
 
-## Plan
+## Verification (2026-11-08, nested podman in the runClaudeInContainer sandbox)
 
-1. `Dockerfile`: drop the `emacs --batch` step and the `install-melpa-packages.el` `COPY`; fix the
-   comments, here and in `entrypoint/02-install-emacs.sh`.
-2. `init.el`: `(byte-recompile-directory package-user-dir 0)` after `(package-initialize)`.
-3. Makefile comments and `CLAUDE.md`/`README.md` where they describe the build-time install.
-
-## Verification
-
-- `make image` (default flags): no MELPA fetch; `/usr/bin/emacs` present; no `/root/.emacs.d/elpa`.
-- `make shell-exec CMD='emacs --batch -l /root/.emacs.d/init.el ...'`: exits 0, compiles `.elc` into
-  the host `elpa/`, `git status` clean.
+- `make image` (default flags) succeeded with no MELPA fetch; the image-build `meson test` and the
+  sanitizer gate each: 2 ok, 0 fail. The image has `/usr/bin/emacs` and no `/root/.emacs.d`.
+- Emacs in batch with the Makefile's `.emacs.d` mount, `--network=none`
+  (runClaudeInContainer `tasks/adhoc/emacs-no-build-time-compile/emacs-start-check.sh`): exit 0, 315 `.elc`
+  in the host `elpa/`; `git status` showed only this change.
 - `tools/check_helm_file_at_point.sh` (runClaudeInContainer): 7/7.
-
-## Open questions
-
-None.
+- Found, not fixed:
+  - Contract-level: the run-time compile logs `Cannot open load file … compat-macs.el` for compat's
+    `compat-26.el`…`compat-30.el` on every start; harmless on Emacs 31.
+  - Existing config issue: `init.el`'s `use-package clang-format` binds into `c-mode-base-map` before
+    cc-mode loads (`Error (use-package): clang-format/:catch: … c-mode-base-map`); the contract's form is
+    `:after cc-mode`.
